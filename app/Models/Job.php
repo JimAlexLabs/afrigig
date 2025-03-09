@@ -10,32 +10,24 @@ class Job extends Model
     use HasFactory;
 
     protected $fillable = [
+        'user_id',
         'title',
         'description',
-        'client_id',
-        'category',
-        'skills_required',
-        'budget_min',
-        'budget_max',
+        'budget',
         'deadline',
-        'status', // 'open', 'in_progress', 'completed', 'cancelled'
-        'experience_level', // 'entry', 'intermediate', 'expert'
-        'project_length', // 'short', 'medium', 'long'
-        'attachments',
+        'skills',
+        'status',
     ];
 
     protected $casts = [
-        'skills_required' => 'array',
+        'skills' => 'array',
         'deadline' => 'datetime',
-        'budget_min' => 'float',
-        'budget_max' => 'float',
-        'attachments' => 'array',
+        'budget' => 'decimal:2',
     ];
 
-    // Relationships
-    public function client()
+    public function user()
     {
-        return $this->belongsTo(User::class, 'client_id');
+        return $this->belongsTo(User::class);
     }
 
     public function bids()
@@ -43,29 +35,8 @@ class Job extends Model
         return $this->hasMany(Bid::class);
     }
 
-    public function freelancer()
-    {
-        return $this->belongsTo(User::class, 'freelancer_id')->withDefault();
-    }
-
     public function milestones()
     {
         return $this->hasMany(Milestone::class);
-    }
-
-    // Scopes
-    public function scopeOpen($query)
-    {
-        return $query->where('status', 'open');
-    }
-
-    public function scopeInProgress($query)
-    {
-        return $query->where('status', 'in_progress');
-    }
-
-    public function scopeCompleted($query)
-    {
-        return $query->where('status', 'completed');
     }
 } 

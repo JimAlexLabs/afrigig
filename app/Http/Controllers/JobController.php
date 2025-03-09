@@ -15,67 +15,45 @@ class JobController extends Controller
         $this->middleware('auth');
     }
 
-    public function index(Request $request)
+    public function index()
     {
-        $query = Job::with(['client', 'bids'])
-            ->when($request->search, function ($query, $search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('title', 'like', "%{$search}%")
-                        ->orWhere('description', 'like', "%{$search}%");
-                });
+        $jobs = Job::with('user')
+            ->when(Auth::user()->role === 'client', function ($query) {
+                return $query->where('user_id', Auth::id());
             })
-            ->when($request->category, function ($query, $category) {
-                $query->where('category', $category);
-            })
-            ->when($request->experience_level, function ($query, $level) {
-                $query->where('experience_level', $level);
-            })
-            ->when($request->budget_min, function ($query, $min) {
-                $query->where('budget_min', '>=', $min);
-            })
-            ->when($request->budget_max, function ($query, $max) {
-                $query->where('budget_max', '<=', $max);
-            });
+            ->latest()
+            ->paginate(10);
 
-        $jobs = $query->latest()->paginate(10);
         return view('jobs.index', compact('jobs'));
     }
 
     public function create()
     {
-        $this->authorize('create', Job::class);
+        if (Auth::user()->role !== 'client') {
+            return redirect()->route('jobs.index')
+                ->with('error', 'Only clients can post jobs.');
+        }
+
         return view('jobs.create');
     }
 
     public function store(Request $request)
     {
-        $this->authorize('create', Job::class);
-        
+        if (Auth::user()->role !== 'client') {
+            return redirect()->route('jobs.index')
+                ->with('error', 'Only clients can post jobs.');
+        }
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'category' => 'required|string|max:100',
-            'skills_required' => 'required|array',
-            'budget_min' => 'required|numeric|min:0',
-            'budget_max' => 'required|numeric|gt:budget_min',
+            'budget' => 'required|numeric|min:1',
             'deadline' => 'required|date|after:today',
-            'experience_level' => 'required|in:entry,intermediate,expert',
-            'project_length' => 'required|in:short,medium,long',
-            'attachments.*' => 'nullable|file|max:10240', // 10MB max
+            'skills' => 'required|array|min:1',
+            'skills.*' => 'string',
         ]);
 
-        $attachments = [];
-        if ($request->hasFile('attachments')) {
-            foreach ($request->file('attachments') as $file) {
-                $path = $file->store('job-attachments', 'public');
-                $attachments[] = $path;
-            }
-        }
-
-        $job = Job::create([
-            'client_id' => Auth::id(),
-            'attachments' => $attachments,
-        ] + $validated);
+        $job = Auth::user()->jobs()->create($validated);
 
         return redirect()->route('jobs.show', $job)
             ->with('success', 'Job posted successfully.');
@@ -83,44 +61,37 @@ class JobController extends Controller
 
     public function show(Job $job)
     {
-        $job->load(['client', 'bids.freelancer', 'milestones']);
+        $job->load(['user', 'bids.user']);
         return view('jobs.show', compact('job'));
     }
 
     public function edit(Job $job)
     {
-        $this->authorize('update', $job);
+        if (Auth::id() !== $job->user_id) {
+            return redirect()->route('jobs.index')
+                ->with('error', 'You can only edit your own jobs.');
+        }
+
         return view('jobs.edit', compact('job'));
     }
 
     public function update(Request $request, Job $job)
     {
-        $this->authorize('update', $job);
-        
+        if (Auth::id() !== $job->user_id) {
+            return redirect()->route('jobs.index')
+                ->with('error', 'You can only edit your own jobs.');
+        }
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'category' => 'required|string|max:100',
-            'skills_required' => 'required|array',
-            'budget_min' => 'required|numeric|min:0',
-            'budget_max' => 'required|numeric|gt:budget_min',
+            'budget' => 'required|numeric|min:1',
             'deadline' => 'required|date|after:today',
-            'experience_level' => 'required|in:entry,intermediate,expert',
-            'project_length' => 'required|in:short,medium,long',
-            'attachments.*' => 'nullable|file|max:10240',
+            'skills' => 'required|array|min:1',
+            'skills.*' => 'string',
         ]);
 
-        $attachments = $job->attachments;
-        if ($request->hasFile('attachments')) {
-            foreach ($request->file('attachments') as $file) {
-                $path = $file->store('job-attachments', 'public');
-                $attachments[] = $path;
-            }
-        }
-
-        $job->update([
-            'attachments' => $attachments,
-        ] + $validated);
+        $job->update($validated);
 
         return redirect()->route('jobs.show', $job)
             ->with('success', 'Job updated successfully.');
@@ -128,11 +99,9 @@ class JobController extends Controller
 
     public function destroy(Job $job)
     {
-        $this->authorize('delete', $job);
-
-        // Delete attachments
-        foreach ($job->attachments as $attachment) {
-            Storage::disk('public')->delete($attachment);
+        if (Auth::id() !== $job->user_id) {
+            return redirect()->route('jobs.index')
+                ->with('error', 'You can only delete your own jobs.');
         }
 
         $job->delete();
@@ -143,19 +112,33 @@ class JobController extends Controller
 
     public function submitBid(Request $request, Job $job)
     {
-        $this->authorize('bid', $job);
+        if (Auth::user()->role !== 'freelancer') {
+            return redirect()->route('jobs.show', $job)
+                ->with('error', 'Only freelancers can submit bids.');
+        }
+
+        if (Auth::id() === $job->user_id) {
+            return redirect()->route('jobs.show', $job)
+                ->with('error', 'You cannot bid on your own job.');
+        }
+
+        if ($job->bids()->where('user_id', Auth::id())->exists()) {
+            return redirect()->route('jobs.show', $job)
+                ->with('error', 'You have already bid on this job.');
+        }
 
         $validated = $request->validate([
-            'amount' => 'required|numeric|min:' . $job->budget_min . '|max:' . $job->budget_max,
-            'proposal' => 'required|string|min:100',
+            'amount' => 'required|numeric|min:1',
+            'proposal' => 'required|string',
             'delivery_time' => 'required|integer|min:1',
         ]);
 
-        $bid = new Bid([
-            'freelancer_id' => Auth::id(),
-        ] + $validated);
-
-        $job->bids()->save($bid);
+        $job->bids()->create([
+            'user_id' => Auth::id(),
+            'amount' => $validated['amount'],
+            'proposal' => $validated['proposal'],
+            'delivery_time' => $validated['delivery_time'],
+        ]);
 
         return redirect()->route('jobs.show', $job)
             ->with('success', 'Bid submitted successfully.');
@@ -163,16 +146,27 @@ class JobController extends Controller
 
     public function acceptBid(Job $job, Bid $bid)
     {
-        $this->authorize('update', $job);
+        if (Auth::id() !== $job->user_id) {
+            return redirect()->route('jobs.show', $job)
+                ->with('error', 'Only the job owner can accept bids.');
+        }
+
+        if ($job->status !== 'active') {
+            return redirect()->route('jobs.show', $job)
+                ->with('error', 'This job is no longer active.');
+        }
 
         $bid->update(['status' => 'accepted']);
-        $job->update([
-            'status' => 'in_progress',
-            'freelancer_id' => $bid->freelancer_id
-        ]);
+        $job->update(['status' => 'in_progress']);
 
-        // Reject other bids
-        $job->bids()->where('id', '!=', $bid->id)->update(['status' => 'rejected']);
+        // Create milestone
+        $job->milestones()->create([
+            'title' => 'Project Completion',
+            'description' => 'Complete project delivery',
+            'amount' => $bid->amount,
+            'due_date' => now()->addDays($bid->delivery_time),
+            'freelancer_id' => $bid->user_id,
+        ]);
 
         return redirect()->route('jobs.show', $job)
             ->with('success', 'Bid accepted successfully.');

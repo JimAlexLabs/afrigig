@@ -16,8 +16,10 @@ class AdminUserSeeder extends Seeder
             'password' => Hash::make('password'),
             'role' => 'admin',
             'email_verified_at' => now(),
-            'is_active' => true,
             'is_verified' => true,
+            'rating' => 5.0,
+            'country' => 'Kenya',
+            'bio' => 'System Administrator',
         ]);
     }
 } 

@@ -1,61 +1,51 @@
 <?php
 
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\JobController;
 use App\Http\Controllers\PaymentController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\HealthController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\BidController;
 use Illuminate\Support\Facades\Route;
-
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
-|
-*/
 
 Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/health', [HealthController::class, 'check']);
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/dashboard', function () {
+        return view('dashboard');
+    })->name('dashboard');
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
-
-Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Job routes
     Route::resource('jobs', JobController::class);
-    Route::post('/jobs/{job}/bids', [JobController::class, 'submitBid'])->name('jobs.bids.store');
-    Route::post('/jobs/{job}/bids/{bid}/accept', [JobController::class, 'acceptBid'])->name('jobs.bids.accept');
+    Route::post('/jobs/{job}/bid', [JobController::class, 'submitBid'])->name('jobs.bid');
+    Route::post('/jobs/{job}/accept-bid/{bid}', [JobController::class, 'acceptBid'])->name('jobs.accept-bid');
 
     // Payment routes
-    Route::get('/payments/{milestone}', [PaymentController::class, 'show'])->name('payments.show');
-    Route::post('/payments/{milestone}/mpesa', [PaymentController::class, 'processMpesa'])->name('payments.mpesa.process');
-    Route::post('/payments/{milestone}/paypal', [PaymentController::class, 'processPaypal'])->name('payments.paypal.process');
-    Route::post('/payments/mpesa/callback', [PaymentController::class, 'mpesaCallback'])->name('payments.mpesa.callback');
-    Route::get('/payments/paypal/success', [PaymentController::class, 'paypalSuccess'])->name('payments.paypal.success');
-    Route::get('/payments/paypal/cancel', [PaymentController::class, 'paypalCancel'])->name('payments.paypal.cancel');
-    Route::get('/payments/{payment}/status', [PaymentController::class, 'checkStatus'])->name('payments.status');
+    Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
+    Route::get('/payments/{payment}', [PaymentController::class, 'show'])->name('payments.show');
+    Route::post('/payments/process', [PaymentController::class, 'process'])->name('payments.process');
 
     // Admin routes
     Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
-        Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
         Route::get('/users', [AdminController::class, 'users'])->name('users');
         Route::get('/jobs', [AdminController::class, 'jobs'])->name('jobs');
         Route::get('/payments', [AdminController::class, 'payments'])->name('payments');
-        Route::post('/users/{user}/toggle-status', [AdminController::class, 'toggleUserStatus'])->name('users.toggle-status');
         Route::post('/users/{user}/verify', [AdminController::class, 'verifyUser'])->name('users.verify');
+        Route::post('/users/{user}/toggle-status', [AdminController::class, 'toggleUserStatus'])->name('users.toggle-status');
+        Route::delete('/jobs/{job}', [AdminController::class, 'deleteJob'])->name('jobs.delete');
     });
+
+    // Bid routes
+    Route::post('/jobs/{job}/bids', [BidController::class, 'store'])->name('bids.store');
+    Route::put('/bids/{bid}', [BidController::class, 'update'])->name('bids.update');
+    Route::delete('/bids/{bid}', [BidController::class, 'destroy'])->name('bids.destroy');
+    Route::patch('/bids/{bid}/accept', [BidController::class, 'accept'])->name('bids.accept');
+    Route::patch('/bids/{bid}/reject', [BidController::class, 'reject'])->name('bids.reject');
 });
 
-require __DIR__.'/auth.php'; 
+require __DIR__.'/auth.php';

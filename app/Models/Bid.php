@@ -10,27 +10,26 @@ class Bid extends Model
     use HasFactory;
 
     protected $fillable = [
+        'user_id',
         'job_id',
-        'freelancer_id',
         'amount',
         'proposal',
         'delivery_time',
-        'status', // 'pending', 'accepted', 'rejected'
+        'status',
     ];
 
     protected $casts = [
-        'amount' => 'float',
-        'delivery_time' => 'integer', // in days
+        'amount' => 'decimal:2',
+        'delivery_time' => 'integer',
     ];
 
-    // Relationships
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function job()
     {
         return $this->belongsTo(Job::class);
-    }
-
-    public function freelancer()
-    {
-        return $this->belongsTo(User::class, 'freelancer_id');
     }
 } 
