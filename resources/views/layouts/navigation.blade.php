@@ -20,11 +20,14 @@
                         <x-nav-link :href="route('admin.users')" :active="request()->routeIs('admin.users')">
                             {{ __('Users') }}
                         </x-nav-link>
-                        <x-nav-link :href="route('admin.jobs')" :active="request()->routeIs('admin.jobs')">
+                        <x-nav-link :href="route('admin.jobs.index')" :active="request()->routeIs('admin.jobs.*')">
                             {{ __('Jobs') }}
                         </x-nav-link>
                         <x-nav-link :href="route('admin.payments')" :active="request()->routeIs('admin.payments')">
                             {{ __('Payments') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('admin.skill-assessments.index')" :active="request()->routeIs('admin.skill-assessments.*')">
+                            {{ __('Skill Assessments') }}
                         </x-nav-link>
                     @else
                         <x-nav-link :href="route('jobs.index')" :active="request()->routeIs('jobs.index')">
@@ -35,8 +38,8 @@
                                 {{ __('Post Job') }}
                             </x-nav-link>
                         @endif
-                        <x-nav-link :href="route('payments.index')" :active="request()->routeIs('payments.index')">
-                            {{ __('Payments') }}
+                        <x-nav-link :href="route('skill-assessments.index')" :active="request()->routeIs('skill-assessments.*')">
+                            {{ __('Skill Assessments') }}
                         </x-nav-link>
                     @endif
 
@@ -142,11 +145,14 @@
                 <x-responsive-nav-link :href="route('admin.users')" :active="request()->routeIs('admin.users')">
                     {{ __('Users') }}
                 </x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('admin.jobs')" :active="request()->routeIs('admin.jobs')">
+                <x-responsive-nav-link :href="route('admin.jobs.index')" :active="request()->routeIs('admin.jobs.*')">
                     {{ __('Jobs') }}
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('admin.payments')" :active="request()->routeIs('admin.payments')">
                     {{ __('Payments') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.skill-assessments.index')" :active="request()->routeIs('admin.skill-assessments.*')">
+                    {{ __('Skill Assessments') }}
                 </x-responsive-nav-link>
             @else
                 <x-responsive-nav-link :href="route('jobs.index')" :active="request()->routeIs('jobs.index')">
@@ -157,26 +163,8 @@
                         {{ __('Post Job') }}
                     </x-responsive-nav-link>
                 @endif
-                <x-responsive-nav-link :href="route('payments.index')" :active="request()->routeIs('payments.index')">
-                    {{ __('Payments') }}
-                </x-responsive-nav-link>
-            @endif
-
-            <!-- Admin Navigation -->
-            @if (auth()->user()->isAdmin())
-                <div class="space-y-1">
-                    <!-- Skill Assessments -->
-                    <x-responsive-nav-link :href="route('admin.skill-assessments.index')" :active="request()->routeIs('admin.skill-assessments.index')">
-                        Manage Assessments
-                    </x-responsive-nav-link>
-                </div>
-            @endif
-
-            <!-- User Navigation -->
-            @if (!auth()->user()->isAdmin())
-                <!-- Skill Assessments -->
                 <x-responsive-nav-link :href="route('skill-assessments.index')" :active="request()->routeIs('skill-assessments.*')">
-                    Skill Assessments
+                    {{ __('Skill Assessments') }}
                 </x-responsive-nav-link>
             @endif
         </div>

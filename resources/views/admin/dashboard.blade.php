@@ -1,3 +1,5 @@
+@inject('pixabay', 'App\Services\PixabayService')
+
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
@@ -7,101 +9,116 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <!-- Stats Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+            @if($image = $pixabay->getAdminDashboardImage())
+                <div class="mb-8">
+                    <x-feature-image 
+                        :imageUrl="$image['largeImageURL']" 
+                        :alt="'Admin Dashboard Feature'"
+                        class="h-64 w-full"
+                    />
+                </div>
+            @endif
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <!-- Total Users Card -->
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-lg">
                     <div class="p-6">
-                        <div class="text-gray-900 dark:text-gray-100">
-                            <h3 class="text-lg font-semibold">Total Users</h3>
-                            <p class="text-3xl font-bold">{{ \App\Models\User::count() }}</p>
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-blue-500 bg-opacity-10">
+                                <svg class="h-8 w-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Users</p>
+                                <p class="text-2xl font-semibold text-gray-900 dark:text-white">{{ $totalUsers }}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                <!-- Active Jobs Card -->
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-lg">
                     <div class="p-6">
-                        <div class="text-gray-900 dark:text-gray-100">
-                            <h3 class="text-lg font-semibold">Active Jobs</h3>
-                            <p class="text-3xl font-bold">{{ \App\Models\Job::where('status', 'active')->count() }}</p>
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-green-500 bg-opacity-10">
+                                <svg class="h-8 w-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Active Jobs</p>
+                                <p class="text-2xl font-semibold text-gray-900 dark:text-white">{{ $activeJobs }}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                <!-- Total Earnings Card -->
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-lg">
                     <div class="p-6">
-                        <div class="text-gray-900 dark:text-gray-100">
-                            <h3 class="text-lg font-semibold">Total Earnings</h3>
-                            <p class="text-3xl font-bold">${{ number_format(\App\Models\Payment::where('status', 'completed')->sum('amount'), 2) }}</p>
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-yellow-500 bg-opacity-10">
+                                <svg class="h-8 w-8 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Earnings</p>
+                                <p class="text-2xl font-semibold text-gray-900 dark:text-white">${{ number_format($totalEarnings, 2) }}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                <!-- Completed Jobs Card -->
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-lg">
                     <div class="p-6">
-                        <div class="text-gray-900 dark:text-gray-100">
-                            <h3 class="text-lg font-semibold">Pending Verifications</h3>
-                            <p class="text-3xl font-bold">{{ \App\Models\User::where('is_verified', false)->count() }}</p>
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-purple-500 bg-opacity-10">
+                                <svg class="h-8 w-8 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Completed Jobs</p>
+                                <p class="text-2xl font-semibold text-gray-900 dark:text-white">{{ $completedJobs }}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Management Sections -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Recent Users -->
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Recent Users</h3>
-                            <a href="{{ route('admin.users') }}" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200">View All</a>
-                        </div>
-                        <div class="space-y-4">
-                            @foreach(\App\Models\User::latest()->take(5)->get() as $user)
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center">
-                                        @if($user->avatar)
-                                            <img src="{{ $user->avatar }}" alt="{{ $user->name }}" class="w-10 h-10 rounded-full">
+            <!-- Recent Activity -->
+            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-lg">
+                <div class="p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Activity</h3>
+                    <div class="space-y-4">
+                        @forelse($recentActivities as $activity)
+                            <div class="flex items-center space-x-4">
+                                <div class="flex-shrink-0">
+                                    <span class="inline-block h-10 w-10 rounded-full overflow-hidden bg-gray-100">
+                                        @if($activity->user && $activity->user->avatar)
+                                            <img src="{{ $activity->user->avatar }}" alt="{{ $activity->user->name }}" class="h-full w-full object-cover">
                                         @else
-                                            <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-                                                <span class="text-gray-500 text-sm">{{ strtoupper(substr($user->name, 0, 2)) }}</span>
-                                            </div>
+                                            <svg class="h-full w-full text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+                                                <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
+                                            </svg>
                                         @endif
-                                        <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $user->name }}</div>
-                                            <div class="text-sm text-gray-500 dark:text-gray-400">{{ $user->email }}</div>
-                                        </div>
-                                    </div>
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $user->is_verified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' }}">
-                                        {{ $user->is_verified ? 'Verified' : 'Pending' }}
                                     </span>
                                 </div>
-                            @endforeach
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Recent Jobs -->
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Recent Jobs</h3>
-                            <a href="{{ route('admin.jobs') }}" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200">View All</a>
-                        </div>
-                        <div class="space-y-4">
-                            @foreach(\App\Models\Job::with('user')->latest()->take(5)->get() as $job)
-                                <div class="border-b border-gray-200 dark:border-gray-700 pb-4 last:border-0 last:pb-0">
-                                    <div class="flex justify-between items-start">
-                                        <div>
-                                            <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $job->title }}</h4>
-                                            <p class="text-sm text-gray-500 dark:text-gray-400">Posted by {{ $job->user->name }}</p>
-                                        </div>
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                                            ${{ number_format($job->budget, 2) }}
-                                        </span>
-                                    </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                        {{ $activity->description }}
+                                    </p>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                                        {{ $activity->created_at->diffForHumans() }}
+                                    </p>
                                 </div>
-                            @endforeach
-                        </div>
+                            </div>
+                        @empty
+                            <p class="text-gray-500 dark:text-gray-400 text-center py-4">No recent activity</p>
+                        @endforelse
                     </div>
                 </div>
             </div>

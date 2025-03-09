@@ -12,6 +12,31 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/test-pixabay', function () {
+    $pixabay = new \App\Services\PixabayService();
+    
+    // Test configuration
+    $config = [
+        'api_key_configured' => !empty(config('services.pixabay.key')),
+        'api_key_length' => strlen(config('services.pixabay.key')),
+        'api_key_preview' => substr(config('services.pixabay.key'), 0, 5) . '...',
+    ];
+    
+    // Test different image types
+    $tests = [
+        'hero' => $pixabay->getHeroImage(),
+        'skill_assessment' => $pixabay->getSkillAssessmentImage(),
+        'job_listing' => $pixabay->getJobListingImage(),
+        'profile' => $pixabay->getProfileImage(),
+        'admin_dashboard' => $pixabay->getAdminDashboardImage(),
+    ];
+    
+    // Get any errors
+    $lastError = $pixabay->getLastError();
+    
+    return view('test-pixabay', compact('config', 'tests', 'lastError'));
+});
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', function () {
         return view('dashboard');
@@ -42,9 +67,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/users/{user}/toggle-status', [AdminController::class, 'toggleUserStatus'])->name('users.toggle-status');
         
         // Job management
-        Route::get('/jobs', [AdminController::class, 'jobs'])->name('jobs');
-        Route::get('/jobs/{job}', [AdminController::class, 'showJob'])->name('jobs.show');
-        Route::delete('/jobs/{job}', [AdminController::class, 'deleteJob'])->name('jobs.delete');
+        Route::prefix('jobs')->name('jobs.')->group(function () {
+            Route::get('/', [AdminController::class, 'jobs'])->name('index');
+            Route::get('/{job}', [AdminController::class, 'showJob'])->name('show');
+            Route::delete('/{job}', [AdminController::class, 'deleteJob'])->name('delete');
+        });
         
         // Payment management
         Route::get('/payments', [AdminController::class, 'payments'])->name('payments');

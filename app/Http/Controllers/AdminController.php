@@ -45,7 +45,7 @@ class AdminController extends Controller
 
     public function jobs(Request $request)
     {
-        $query = Job::with(['user', 'bids']);
+        $query = Job::with(['user', 'skills', 'bids']);
 
         // Search
         if ($request->has('search')) {
@@ -61,9 +61,9 @@ class AdminController extends Controller
             $query->where('status', $request->get('status'));
         }
 
-        $jobs = $query->latest()->paginate(10);
+        $jobs = $query->latest()->paginate(9); // Changed to 9 for 3x3 grid
 
-        return view('admin.jobs', compact('jobs'));
+        return view('admin.jobs.index', compact('jobs'));
     }
 
     public function payments(Request $request)
@@ -132,18 +132,68 @@ class AdminController extends Controller
 
     public function dashboard()
     {
-        $stats = [
-            'total_users' => User::count(),
-            'total_jobs' => Job::count(),
-            'total_earnings' => Payment::where('status', 'completed')->sum('amount'),
-            'pending_verifications' => User::where('is_verified', false)->count(),
-        ];
+        // Stats for cards
+        $totalUsers = User::count();
+        $activeJobs = Job::where('status', 'active')->count();
+        $totalEarnings = Payment::where('status', 'completed')->sum('amount');
+        $completedJobs = Job::where('status', 'completed')->count();
 
-        $recent_users = User::latest()->take(5)->get();
-        $recent_jobs = Job::with('user')->latest()->take(5)->get();
-        $recent_payments = Payment::with(['user', 'job'])->latest()->take(5)->get();
+        // Get recent activities
+        $recentJobs = Job::with('user')
+            ->latest()
+            ->take(5)
+            ->get()
+            ->map(function($job) {
+                return [
+                    'user' => $job->user,
+                    'description' => "New job posted: {$job->title}",
+                    'created_at' => $job->created_at
+                ];
+            });
 
-        return view('admin.dashboard', compact('stats', 'recent_users', 'recent_jobs', 'recent_payments'));
+        $recentUsers = User::latest()
+            ->take(5)
+            ->get()
+            ->map(function($user) {
+                return [
+                    'user' => $user,
+                    'description' => "New user registered: {$user->name}",
+                    'created_at' => $user->created_at
+                ];
+            });
+
+        $recentPayments = Payment::with('user')
+            ->where('status', 'completed')
+            ->latest()
+            ->take(5)
+            ->get()
+            ->map(function($payment) {
+                return [
+                    'user' => $payment->user,
+                    'description' => "Payment completed: ${$payment->amount}",
+                    'created_at' => $payment->created_at
+                ];
+            });
+
+        // Combine and sort activities
+        $recentActivities = collect()
+            ->merge($recentJobs)
+            ->merge($recentUsers)
+            ->merge($recentPayments)
+            ->sortByDesc('created_at')
+            ->take(10)
+            ->map(function($activity) {
+                return (object) $activity;
+            })
+            ->values();
+
+        return view('admin.dashboard', compact(
+            'totalUsers',
+            'activeJobs',
+            'totalEarnings',
+            'completedJobs',
+            'recentActivities'
+        ));
     }
 
     public function showPayment(Payment $payment)

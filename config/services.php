@@ -45,4 +45,8 @@ return [
         'env' => env('PAYPAL_ENV', 'sandbox'),
     ],
 
+    'pixabay' => [
+        'key' => env('PIXABAY_API_KEY'),
+    ],
+
 ]; 
