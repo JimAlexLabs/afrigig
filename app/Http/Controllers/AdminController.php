@@ -6,6 +6,9 @@ use App\Models\User;
 use App\Models\Job;
 use App\Models\Payment;
 use App\Models\Bid;
+use App\Models\SkillAssessment;
+use App\Models\Skill;
+use App\Models\SkillAssessmentAttempt;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -258,5 +261,140 @@ class AdminController extends Controller
             ->get();
 
         return view('admin.reports.jobs', compact('stats', 'jobs_by_status', 'recent_activity'));
+    }
+
+    public function skillAssessments()
+    {
+        $assessments = SkillAssessment::with(['skill'])
+            ->withCount(['attempts', 'attempts as passed_count' => function ($query) {
+                $query->where('passed', true);
+            }])
+            ->latest()
+            ->paginate(10);
+
+        return view('admin.skill-assessments.index', compact('assessments'));
+    }
+
+    public function createSkillAssessment()
+    {
+        $skills = Skill::verified()->get();
+        return view('admin.skill-assessments.create', compact('skills'));
+    }
+
+    public function storeSkillAssessment(Request $request)
+    {
+        $validated = $request->validate([
+            'skill_id' => 'required|exists:skills,id',
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'difficulty' => 'required|in:beginner,intermediate,advanced,expert',
+            'time_limit' => 'required|integer|min:5|max:180',
+            'passing_score' => 'required|integer|min:0|max:100',
+            'questions' => 'required|array|min:1',
+            'questions.*.question' => 'required|string',
+            'questions.*.options' => 'required|array|min:2',
+            'questions.*.correct_answer' => 'required|integer|min:0',
+            'questions.*.explanation' => 'required|string',
+            'questions.*.category' => 'required|string'
+        ]);
+
+        $assessment = SkillAssessment::create($validated);
+
+        return redirect()->route('admin.skill-assessments.index')
+            ->with('success', 'Skill assessment created successfully.');
+    }
+
+    public function editSkillAssessment(SkillAssessment $assessment)
+    {
+        $skills = Skill::verified()->get();
+        return view('admin.skill-assessments.edit', compact('assessment', 'skills'));
+    }
+
+    public function updateSkillAssessment(Request $request, SkillAssessment $assessment)
+    {
+        $validated = $request->validate([
+            'skill_id' => 'required|exists:skills,id',
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'difficulty' => 'required|in:beginner,intermediate,advanced,expert',
+            'time_limit' => 'required|integer|min:5|max:180',
+            'passing_score' => 'required|integer|min:0|max:100',
+            'questions' => 'required|array|min:1',
+            'questions.*.question' => 'required|string',
+            'questions.*.options' => 'required|array|min:2',
+            'questions.*.correct_answer' => 'required|integer|min:0',
+            'questions.*.explanation' => 'required|string',
+            'questions.*.category' => 'required|string',
+            'is_active' => 'boolean'
+        ]);
+
+        $assessment->update($validated);
+
+        return redirect()->route('admin.skill-assessments.index')
+            ->with('success', 'Skill assessment updated successfully.');
+    }
+
+    public function deleteSkillAssessment(SkillAssessment $assessment)
+    {
+        $assessment->delete();
+
+        return redirect()->route('admin.skill-assessments.index')
+            ->with('success', 'Skill assessment deleted successfully.');
+    }
+
+    public function assessmentResults()
+    {
+        $attempts = SkillAssessmentAttempt::with(['user', 'assessment.skill'])
+            ->latest()
+            ->paginate(20);
+
+        return view('admin.skill-assessments.results', compact('attempts'));
+    }
+
+    public function pendingFeedback()
+    {
+        $attempts = SkillAssessmentAttempt::with(['user', 'assessment.skill', 'feedback'])
+            ->whereHas('feedback', function ($query) {
+                $query->whereNull('feedback_date');
+            })
+            ->orWhereDoesntHave('feedback')
+            ->where('completed_at', '<=', now()->subWeeks(2))
+            ->latest()
+            ->paginate(20);
+
+        return view('admin.skill-assessments.pending-feedback', compact('attempts'));
+    }
+
+    public function showAttempt(SkillAssessmentAttempt $attempt)
+    {
+        return view('admin.skill-assessments.show-attempt', compact('attempt'));
+    }
+
+    public function createFeedback(SkillAssessmentAttempt $attempt)
+    {
+        return view('admin.skill-assessments.feedback', compact('attempt'));
+    }
+
+    public function provideFeedback(Request $request, SkillAssessmentAttempt $attempt)
+    {
+        $validated = $request->validate([
+            'feedback' => 'required|string',
+            'improvement_areas' => 'required|array',
+            'recommended_resources' => 'required|array'
+        ]);
+
+        $feedback = $attempt->feedback()->updateOrCreate(
+            ['skill_assessment_attempt_id' => $attempt->id],
+            [
+                'feedback' => $validated['feedback'],
+                'improvement_areas' => $validated['improvement_areas'],
+                'recommended_resources' => $validated['recommended_resources'],
+                'feedback_date' => now(),
+                'reviewed_by' => $request->user()->id
+            ]
+        );
+
+        return redirect()->route('admin.skill-assessments.feedback')
+            ->with('success', 'Feedback provided successfully.');
     }
 } 

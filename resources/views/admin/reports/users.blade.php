@@ -49,7 +49,11 @@
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Registration Trend</h3>
-                        <div class="h-64">
+                        <div class="h-64" 
+                             data-registrations="{{ json_encode([
+                                 'months' => $registrations->pluck('month'),
+                                 'counts' => $registrations->pluck('count')
+                             ]) }}">
                             <canvas id="registrationChart"></canvas>
                         </div>
                     </div>
@@ -59,7 +63,11 @@
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">User Distribution</h3>
-                        <div class="h-64">
+                        <div class="h-64" 
+                             data-distribution="{{ json_encode([
+                                 'clients' => $stats['clients'],
+                                 'freelancers' => $stats['freelancers']
+                             ]) }}">
                             <canvas id="distributionChart"></canvas>
                         </div>
                     </div>
@@ -73,13 +81,16 @@
     <script>
         // Registration Trend Chart
         const registrationCtx = document.getElementById('registrationChart').getContext('2d');
+        const registrationContainer = registrationCtx.canvas.parentElement;
+        const registrationData = JSON.parse(registrationContainer.dataset.registrations);
+
         new Chart(registrationCtx, {
             type: 'line',
             data: {
-                labels: @json($registrations->pluck('month')),
+                labels: registrationData.months,
                 datasets: [{
                     label: 'New Registrations',
-                    data: @json($registrations->pluck('count')),
+                    data: registrationData.counts,
                     borderColor: '#4F46E5',
                     tension: 0.1
                 }]
@@ -100,12 +111,15 @@
 
         // User Distribution Chart
         const distributionCtx = document.getElementById('distributionChart').getContext('2d');
+        const distributionContainer = distributionCtx.canvas.parentElement;
+        const distributionData = JSON.parse(distributionContainer.dataset.distribution);
+
         new Chart(distributionCtx, {
             type: 'pie',
             data: {
                 labels: ['Clients', 'Freelancers'],
                 datasets: [{
-                    data: [{{ $stats['clients'] }}, {{ $stats['freelancers'] }}],
+                    data: [distributionData.clients, distributionData.freelancers],
                     backgroundColor: ['#4F46E5', '#10B981']
                 }]
             },

@@ -5,6 +5,7 @@ use App\Http\Controllers\JobController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\BidController;
+use App\Http\Controllers\SkillAssessmentController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -55,6 +56,34 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/reports/earnings', [AdminController::class, 'earningsReport'])->name('reports.earnings');
         Route::get('/reports/users', [AdminController::class, 'usersReport'])->name('reports.users');
         Route::get('/reports/jobs', [AdminController::class, 'jobsReport'])->name('reports.jobs');
+
+        // Skill Assessment Management
+        Route::prefix('skill-assessments')->name('skill-assessments.')->group(function () {
+            Route::get('/', [AdminController::class, 'skillAssessments'])->name('index');
+            Route::get('/create', [AdminController::class, 'createSkillAssessment'])->name('create');
+            Route::post('/', [AdminController::class, 'storeSkillAssessment'])->name('store');
+            Route::get('/{assessment}/edit', [AdminController::class, 'editSkillAssessment'])->name('edit');
+            Route::put('/{assessment}', [AdminController::class, 'updateSkillAssessment'])->name('update');
+            Route::delete('/{assessment}', [AdminController::class, 'deleteSkillAssessment'])->name('delete');
+            
+            // Assessment Results and Feedback
+            Route::get('/results', [AdminController::class, 'assessmentResults'])->name('results');
+            Route::get('/pending-feedback', [AdminController::class, 'pendingFeedback'])->name('feedback');
+            Route::get('/attempts/{attempt}', [AdminController::class, 'showAttempt'])->name('attempts.show');
+            Route::get('/attempts/{attempt}/feedback', [AdminController::class, 'createFeedback'])->name('feedback.create');
+            Route::post('/attempts/{attempt}/feedback', [AdminController::class, 'provideFeedback'])->name('feedback.store');
+        });
+    });
+
+    // Skill Assessment Routes
+    Route::middleware(['auth', 'verified'])->group(function () {
+        Route::get('/skill-assessments', [SkillAssessmentController::class, 'index'])->name('skill-assessments.index');
+        Route::get('/skill-assessments/{assessment}', [SkillAssessmentController::class, 'show'])->name('skill-assessments.show');
+        Route::post('/skill-assessments/{assessment}/start', [SkillAssessmentController::class, 'start'])->name('skill-assessments.start');
+        Route::get('/skill-assessments/attempt/{attempt}', [SkillAssessmentController::class, 'attempt'])->name('skill-assessments.attempt');
+        Route::post('/skill-assessments/attempt/{attempt}/submit', [SkillAssessmentController::class, 'submit'])->name('skill-assessments.submit');
+        Route::get('/skill-assessments/attempt/{attempt}/results', [SkillAssessmentController::class, 'results'])->name('skill-assessments.results');
+        Route::get('/skill-assessments/history', [SkillAssessmentController::class, 'history'])->name('skill-assessments.history');
     });
 
     // Bid routes

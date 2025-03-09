@@ -45,7 +45,11 @@
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Jobs by Status</h3>
-                        <div class="h-64">
+                        <div class="h-64" 
+                             data-jobs="{{ json_encode([
+                                 'labels' => $jobs_by_status->pluck('status')->map(fn($status) => ucfirst(str_replace('_', ' ', $status))),
+                                 'counts' => $jobs_by_status->pluck('count')
+                             ]) }}">
                             <canvas id="jobStatusChart"></canvas>
                         </div>
                     </div>
@@ -92,12 +96,15 @@
     <script>
         // Jobs by Status Chart
         const statusCtx = document.getElementById('jobStatusChart').getContext('2d');
+        const statusContainer = statusCtx.canvas.parentElement;
+        const statusData = JSON.parse(statusContainer.dataset.jobs);
+
         new Chart(statusCtx, {
             type: 'doughnut',
             data: {
-                labels: @json($jobs_by_status->pluck('status')->map(fn($status) => ucfirst(str_replace('_', ' ', $status)))),
+                labels: statusData.labels,
                 datasets: [{
-                    data: @json($jobs_by_status->pluck('count')),
+                    data: statusData.counts,
                     backgroundColor: ['#10B981', '#4F46E5', '#8B5CF6', '#EF4444']
                 }]
             },

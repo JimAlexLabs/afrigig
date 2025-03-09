@@ -24,7 +24,11 @@
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Earnings Over Time</h3>
-                        <div class="h-64">
+                        <div class="h-64" 
+                             data-earnings="{{ json_encode([
+                                 'dates' => $earnings->pluck('date'),
+                                 'totals' => $earnings->pluck('total')
+                             ]) }}">
                             <canvas id="earningsChart"></canvas>
                         </div>
                     </div>
@@ -93,13 +97,16 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         const ctx = document.getElementById('earningsChart').getContext('2d');
+        const chartContainer = ctx.canvas.parentElement;
+        const chartData = JSON.parse(chartContainer.dataset.earnings);
+        
         new Chart(ctx, {
             type: 'line',
             data: {
-                labels: @json($earnings->pluck('date')),
+                labels: chartData.dates,
                 datasets: [{
                     label: 'Earnings',
-                    data: @json($earnings->pluck('total')),
+                    data: chartData.totals,
                     borderColor: '#4F46E5',
                     tension: 0.1
                 }]
