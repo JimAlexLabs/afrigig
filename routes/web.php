@@ -31,13 +31,30 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/payments/process', [PaymentController::class, 'process'])->name('payments.process');
 
     // Admin routes
-    Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
+    Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+        Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+        
+        // User management
         Route::get('/users', [AdminController::class, 'users'])->name('users');
-        Route::get('/jobs', [AdminController::class, 'jobs'])->name('jobs');
-        Route::get('/payments', [AdminController::class, 'payments'])->name('payments');
+        Route::get('/users/{user}', [AdminController::class, 'showUser'])->name('users.show');
         Route::post('/users/{user}/verify', [AdminController::class, 'verifyUser'])->name('users.verify');
         Route::post('/users/{user}/toggle-status', [AdminController::class, 'toggleUserStatus'])->name('users.toggle-status');
+        
+        // Job management
+        Route::get('/jobs', [AdminController::class, 'jobs'])->name('jobs');
+        Route::get('/jobs/{job}', [AdminController::class, 'showJob'])->name('jobs.show');
         Route::delete('/jobs/{job}', [AdminController::class, 'deleteJob'])->name('jobs.delete');
+        
+        // Payment management
+        Route::get('/payments', [AdminController::class, 'payments'])->name('payments');
+        Route::get('/payments/{payment}', [AdminController::class, 'showPayment'])->name('payments.show');
+        Route::post('/payments/{payment}/process', [AdminController::class, 'processPayment'])->name('payments.process');
+        Route::post('/payments/{payment}/refund', [AdminController::class, 'refundPayment'])->name('payments.refund');
+        
+        // Reports and analytics
+        Route::get('/reports/earnings', [AdminController::class, 'earningsReport'])->name('reports.earnings');
+        Route::get('/reports/users', [AdminController::class, 'usersReport'])->name('reports.users');
+        Route::get('/reports/jobs', [AdminController::class, 'jobsReport'])->name('reports.jobs');
     });
 
     // Bid routes
