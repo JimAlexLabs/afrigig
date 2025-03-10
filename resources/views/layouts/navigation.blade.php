@@ -16,6 +16,10 @@
                         {{ __('Dashboard') }}
                     </x-nav-link>
 
+                    <x-nav-link :href="route('jobs.available')" :active="request()->routeIs('jobs.available')">
+                        {{ __('Available Jobs') }}
+                    </x-nav-link>
+
                     @if(auth()->user()->role === 'admin')
                         <x-nav-link :href="route('admin.users')" :active="request()->routeIs('admin.users')">
                             {{ __('Users') }}
@@ -25,6 +29,9 @@
                         </x-nav-link>
                         <x-nav-link :href="route('admin.payments')" :active="request()->routeIs('admin.payments')">
                             {{ __('Payments') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('admin.skill-assessments.index')" :active="request()->routeIs('admin.skill-assessments.*')">
+                            {{ __('Skill Assessments') }}
                         </x-nav-link>
                         <div class="relative" x-data="{ open: false }" @click.away="open = false" @close.stop="open = false">
                             <button @click="open = !open" class="inline-flex items-center px-3 py-2 text-sm font-medium leading-4 text-gray-500 transition duration-150 ease-in-out bg-white border border-transparent rounded-md dark:text-gray-400 dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none">

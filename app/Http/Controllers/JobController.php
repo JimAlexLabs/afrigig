@@ -21,6 +21,16 @@ class JobController extends Controller
         return view('jobs.index', compact('jobs'));
     }
 
+    public function available()
+    {
+        $jobs = Job::where('status', 'open')
+            ->orderBy('deadline')
+            ->take(5)
+            ->get();
+        
+        return view('jobs.available', compact('jobs'));
+    }
+
     public function create()
     {
         if (Auth::user()->role !== 'client') {

@@ -12,19 +12,24 @@ class Job extends Model
     protected $fillable = [
         'title',
         'description',
-        'budget',
+        'budget_min',
+        'budget_max',
         'deadline',
-        'skills',
+        'skills_required',
         'status',
         'location',
         'job_type',
         'experience_level',
+        'project_length',
+        'attachments',
     ];
 
     protected $casts = [
-        'skills' => 'array',
+        'skills_required' => 'array',
         'deadline' => 'datetime',
-        'budget' => 'decimal:2',
+        'budget_min' => 'decimal:2',
+        'budget_max' => 'decimal:2',
+        'attachments' => 'array',
     ];
 
     public function bids()
@@ -35,5 +40,10 @@ class Job extends Model
     public function milestones()
     {
         return $this->hasMany(Milestone::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'client_id');
     }
 } 

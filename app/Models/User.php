@@ -37,7 +37,10 @@ class User extends Authenticatable
         'availability_status',
         'rating',
         'completed_jobs_count',
-        'success_rate'
+        'success_rate',
+        'google_id',
+        'linkedin_id',
+        'terms_accepted',
     ];
 
     protected $hidden = [

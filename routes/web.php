@@ -8,10 +8,19 @@ use App\Http\Controllers\BidController;
 use App\Http\Controllers\SkillAssessmentController;
 use App\Http\Controllers\ContactController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Auth\SocialAuthController;
+
+// Terms and Conditions - Moved to top level
+Route::get('terms', function () {
+    return view('auth.terms');
+})->name('terms');
 
 Route::get('/', function () {
     return view('welcome');
 });
+
+// Available Jobs - Public Route
+Route::get('/available-jobs', [JobController::class, 'available'])->name('jobs.available');
 
 Route::get('/test-pixabay', function () {
     $pixabay = new \App\Services\PixabayService();
@@ -125,5 +134,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('/bids/{bid}/accept', [BidController::class, 'accept'])->name('bids.accept');
     Route::patch('/bids/{bid}/reject', [BidController::class, 'reject'])->name('bids.reject');
 });
+
+// Social Login Routes
+Route::get('auth/google', [SocialAuthController::class, 'googleRedirect'])->name('auth.google');
+Route::get('auth/google/callback', [SocialAuthController::class, 'googleCallback']);
+
+Route::get('auth/linkedin', [SocialAuthController::class, 'linkedinRedirect'])->name('auth.linkedin');
+Route::get('auth/linkedin/callback', [SocialAuthController::class, 'linkedinCallback']);
 
 require __DIR__.'/auth.php';
