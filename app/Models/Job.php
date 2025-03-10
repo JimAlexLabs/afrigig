@@ -10,13 +10,15 @@ class Job extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id',
         'title',
         'description',
         'budget',
         'deadline',
         'skills',
         'status',
+        'location',
+        'job_type',
+        'experience_level',
     ];
 
     protected $casts = [
@@ -24,11 +26,6 @@ class Job extends Model
         'deadline' => 'datetime',
         'budget' => 'decimal:2',
     ];
-
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
 
     public function bids()
     {

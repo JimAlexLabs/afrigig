@@ -6,6 +6,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\BidController;
 use App\Http\Controllers\SkillAssessmentController;
+use App\Http\Controllers\ContactController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -46,10 +47,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Job routes
-    Route::resource('jobs', JobController::class);
+    // Job routes - now read-only for regular users
+    Route::get('/jobs', [JobController::class, 'index'])->name('jobs.index');
+    Route::get('/jobs/{job}', [JobController::class, 'show'])->name('jobs.show');
     Route::post('/jobs/{job}/bid', [JobController::class, 'submitBid'])->name('jobs.bid');
-    Route::post('/jobs/{job}/accept-bid/{bid}', [JobController::class, 'acceptBid'])->name('jobs.accept-bid');
 
     // Payment routes
     Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
@@ -69,7 +70,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Job management
         Route::prefix('jobs')->name('jobs.')->group(function () {
             Route::get('/', [AdminController::class, 'jobs'])->name('index');
+            Route::get('/create', [AdminController::class, 'createJob'])->name('create');
+            Route::post('/', [AdminController::class, 'storeJob'])->name('store');
             Route::get('/{job}', [AdminController::class, 'showJob'])->name('show');
+            Route::get('/{job}/edit', [AdminController::class, 'editJob'])->name('edit');
+            Route::put('/{job}', [AdminController::class, 'updateJob'])->name('update');
             Route::delete('/{job}', [AdminController::class, 'deleteJob'])->name('delete');
         });
         

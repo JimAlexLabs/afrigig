@@ -17,13 +17,7 @@ class JobController extends Controller
 
     public function index()
     {
-        $jobs = Job::with('user')
-            ->when(Auth::user()->role === 'client', function ($query) {
-                return $query->where('user_id', Auth::id());
-            })
-            ->latest()
-            ->paginate(10);
-
+        $jobs = Job::latest()->paginate(10);
         return view('jobs.index', compact('jobs'));
     }
 
@@ -61,7 +55,7 @@ class JobController extends Controller
 
     public function show(Job $job)
     {
-        $job->load(['user', 'bids.user']);
+        $job->load(['bids.user']);
         return view('jobs.show', compact('job'));
     }
 
@@ -115,11 +109,6 @@ class JobController extends Controller
         if (Auth::user()->role !== 'freelancer') {
             return redirect()->route('jobs.show', $job)
                 ->with('error', 'Only freelancers can submit bids.');
-        }
-
-        if (Auth::id() === $job->user_id) {
-            return redirect()->route('jobs.show', $job)
-                ->with('error', 'You cannot bid on your own job.');
         }
 
         if ($job->bids()->where('user_id', Auth::id())->exists()) {

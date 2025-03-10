@@ -5,67 +5,165 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{{ config('app.name', 'Afrigig') }}</title>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        <!-- Add Font Awesome for social icons -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     </head>
     <body class="antialiased">
-        <div class="relative sm:flex sm:justify-center sm:items-center min-h-screen bg-dots-darker bg-center bg-gray-100 dark:bg-dots-lighter dark:bg-gray-900 selection:bg-red-500 selection:text-white">
-            @if (Route::has('login'))
-                <div class="sm:fixed sm:top-0 sm:right-0 p-6 text-right z-10">
-                    @auth
-                        <a href="{{ url('/dashboard') }}" class="font-semibold text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white focus:outline focus:outline-2 focus:rounded-sm focus:outline-red-500">Dashboard</a>
-                    @else
-                        <a href="{{ route('login') }}" class="font-semibold text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white focus:outline focus:outline-2 focus:rounded-sm focus:outline-red-500">Log in</a>
-
-                        @if (Route::has('register'))
-                            <a href="{{ route('register') }}" class="ml-4 font-semibold text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white focus:outline focus:outline-2 focus:rounded-sm focus:outline-red-500">Register</a>
-                        @endif
-                    @endauth
-                </div>
-            @endif
-
-            <div class="max-w-7xl mx-auto p-6 lg:p-8">
-                <div class="flex justify-center">
-                    <h1 class="text-6xl font-bold text-gray-900 dark:text-white">Afrigig</h1>
-                </div>
-
-                <div class="mt-16">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
-                        <div class="scale-100 p-6 bg-white dark:bg-gray-800/50 dark:bg-gradient-to-bl from-gray-700/50 via-transparent dark:ring-1 dark:ring-inset dark:ring-white/5 rounded-lg shadow-2xl shadow-gray-500/20 dark:shadow-none flex motion-safe:hover:scale-[1.01] transition-all duration-250 focus:outline focus:outline-2 focus:outline-red-500">
-                            <div>
-                                <h2 class="text-xl font-semibold text-gray-900 dark:text-white">For Freelancers</h2>
-                                <p class="mt-4 text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
-                                    Join our community of talented African freelancers. Showcase your skills, find exciting projects, and grow your career.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div class="scale-100 p-6 bg-white dark:bg-gray-800/50 dark:bg-gradient-to-bl from-gray-700/50 via-transparent dark:ring-1 dark:ring-inset dark:ring-white/5 rounded-lg shadow-2xl shadow-gray-500/20 dark:shadow-none flex motion-safe:hover:scale-[1.01] transition-all duration-250 focus:outline focus:outline-2 focus:outline-red-500">
-                            <div>
-                                <h2 class="text-xl font-semibold text-gray-900 dark:text-white">For Clients</h2>
-                                <p class="mt-4 text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
-                                    Find the best African talent for your projects. Post jobs, review proposals, and work with skilled professionals.
-                                </p>
-                            </div>
+        <!-- Navigation -->
+        <nav class="bg-white shadow-lg fixed w-full z-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex">
+                        <div class="flex-shrink-0 flex items-center">
+                            <img class="h-8 w-auto" src="{{ asset('images/logo.svg') }}" alt="Afrigig Logo">
                         </div>
                     </div>
+                    <div class="flex items-center">
+                        @if (Route::has('login'))
+                            <div class="space-x-4">
+                                @auth
+                                    <a href="{{ url('/dashboard') }}" class="text-gray-700 hover:text-gray-900">Dashboard</a>
+                                @else
+                                    <a href="{{ route('login') }}" class="text-gray-700 hover:text-gray-900">Log in</a>
+                                    @if (Route::has('register'))
+                                        <a href="{{ route('register') }}" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Register</a>
+                                    @endif
+                                @endauth
+                            </div>
+                        @endif
+                    </div>
                 </div>
+            </div>
+        </nav>
 
-                <div class="flex justify-center mt-16 px-0 sm:items-center sm:justify-between">
-                    <div class="text-center text-sm text-gray-500 dark:text-gray-400 sm:text-left">
-                        <div class="flex items-center gap-4">
-                            <a href="https://github.com/yourusername/afrigig" class="group inline-flex items-center hover:text-gray-700 dark:hover:text-white focus:outline focus:outline-2 focus:rounded-sm focus:outline-red-500">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" class="-mt-px mr-1 w-5 h-5 stroke-gray-400 dark:stroke-gray-600 group-hover:stroke-gray-600 dark:group-hover:stroke-gray-400">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
-                                </svg>
-                                Sponsor
+        <!-- Hero Section -->
+        <div class="relative bg-gradient-to-r from-blue-600 to-indigo-700 pt-32 pb-20 text-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                    <div>
+                        <h1 class="text-4xl md:text-6xl font-bold mb-6">
+                            Empowering African Talent
+                        </h1>
+                        <p class="text-xl mb-8">
+                            Connecting skilled African professionals with global opportunities. Join our platform to showcase your expertise and find exciting projects.
+                        </p>
+                        <div class="space-x-4">
+                            <a href="{{ route('register') }}" class="bg-white text-blue-600 px-8 py-3 rounded-full font-semibold hover:bg-gray-100 transition">
+                                Get Started
+                            </a>
+                            <a href="#about" class="border border-white px-8 py-3 rounded-full font-semibold hover:bg-white hover:text-blue-600 transition">
+                                Learn More
                             </a>
                         </div>
                     </div>
-
-                    <div class="ml-4 text-center text-sm text-gray-500 dark:text-gray-400 sm:text-right sm:ml-0">
-                        Laravel v{{ Illuminate\Foundation\Application::VERSION }} (PHP v{{ PHP_VERSION }})
+                    <div class="hidden md:block">
+                        <img src="{{ asset('images/hero-image.png') }}" alt="African Professionals" class="rounded-lg shadow-xl">
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- About Section -->
+        <div id="about" class="py-20 bg-gray-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-4">About Afrigig</h2>
+                    <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                        We're on a mission to showcase African talent to the world. Our platform connects skilled professionals with opportunities that match their expertise.
+                    </p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="bg-white p-8 rounded-xl shadow-md">
+                        <div class="text-blue-600 mb-4">
+                            <i class="fas fa-users text-4xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-4">Community</h3>
+                        <p class="text-gray-600">Join our growing community of African professionals and expand your network.</p>
+                    </div>
+                    <div class="bg-white p-8 rounded-xl shadow-md">
+                        <div class="text-blue-600 mb-4">
+                            <i class="fas fa-briefcase text-4xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-4">Opportunities</h3>
+                        <p class="text-gray-600">Access high-quality job opportunities from reputable organizations worldwide.</p>
+                    </div>
+                    <div class="bg-white p-8 rounded-xl shadow-md">
+                        <div class="text-blue-600 mb-4">
+                            <i class="fas fa-graduation-cap text-4xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-4">Growth</h3>
+                        <p class="text-gray-600">Enhance your skills through our training programs and skill assessments.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Impact Section -->
+        <div class="py-20 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-4">Our Impact</h2>
+                    <p class="text-xl text-gray-600">Making a difference in the African tech ecosystem</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
+                    <div>
+                        <div class="text-4xl font-bold text-blue-600 mb-2">5000+</div>
+                        <div class="text-gray-600">Registered Professionals</div>
+                    </div>
+                    <div>
+                        <div class="text-4xl font-bold text-blue-600 mb-2">1000+</div>
+                        <div class="text-gray-600">Completed Projects</div>
+                    </div>
+                    <div>
+                        <div class="text-4xl font-bold text-blue-600 mb-2">50+</div>
+                        <div class="text-gray-600">Countries Reached</div>
+                    </div>
+                    <div>
+                        <div class="text-4xl font-bold text-blue-600 mb-2">$2M+</div>
+                        <div class="text-gray-600">Paid to Freelancers</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="bg-gray-900 text-white py-12">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">About Us</h3>
+                        <p class="text-gray-400">Empowering African talent through technology and connecting them with global opportunities.</p>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
+                        <ul class="space-y-2 text-gray-400">
+                            <li><a href="#" class="hover:text-white">Home</a></li>
+                            <li><a href="#about" class="hover:text-white">About</a></li>
+                            <li><a href="#" class="hover:text-white">Jobs</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">Follow Us</h3>
+                        <div class="flex space-x-4">
+                            <a href="#" class="text-gray-400 hover:text-white">
+                                <i class="fab fa-twitter"></i>
+                            </a>
+                            <a href="#" class="text-gray-400 hover:text-white">
+                                <i class="fab fa-linkedin"></i>
+                            </a>
+                            <a href="#" class="text-gray-400 hover:text-white">
+                                <i class="fab fa-facebook"></i>
+                            </a>
+                            <a href="#" class="text-gray-400 hover:text-white">
+                                <i class="fab fa-instagram"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-12 pt-8 border-t border-gray-800 text-center text-gray-400">
+                    <p>&copy; {{ date('Y') }} Afrigig. All rights reserved.</p>
+                </div>
+            </div>
+        </footer>
     </body>
 </html> 

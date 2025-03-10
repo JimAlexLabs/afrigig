@@ -447,4 +447,67 @@ class AdminController extends Controller
         return redirect()->route('admin.skill-assessments.feedback')
             ->with('success', 'Feedback provided successfully.');
     }
+
+    public function createJob()
+    {
+        return view('admin.jobs.create');
+    }
+
+    public function storeJob(Request $request)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'requirements' => 'required|string',
+            'benefits' => 'nullable|string',
+            'budget' => 'required|numeric|min:1',
+            'deadline' => 'required|date|after:today',
+            'skills' => 'required|array|min:1',
+            'skills.*' => 'string',
+            'location' => 'required|string',
+            'job_type' => 'required|in:full-time,part-time,contract,temporary',
+            'experience_level' => 'required|in:entry,intermediate,expert',
+            'posted_by' => 'required|string'
+        ]);
+
+        $job = Job::create($validated);
+
+        return redirect()->route('admin.jobs.show', $job)
+            ->with('success', 'Job posted successfully.');
+    }
+
+    public function editJob(Job $job)
+    {
+        return view('admin.jobs.edit', compact('job'));
+    }
+
+    public function updateJob(Request $request, Job $job)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'requirements' => 'required|string',
+            'benefits' => 'nullable|string',
+            'budget' => 'required|numeric|min:1',
+            'deadline' => 'required|date|after:today',
+            'skills' => 'required|array|min:1',
+            'skills.*' => 'string',
+            'location' => 'required|string',
+            'job_type' => 'required|in:full-time,part-time,contract,temporary',
+            'experience_level' => 'required|in:entry,intermediate,expert',
+            'posted_by' => 'required|string'
+        ]);
+
+        $job->update($validated);
+
+        return redirect()->route('admin.jobs.show', $job)
+            ->with('success', 'Job updated successfully.');
+    }
+
+    public function deleteJob(Job $job)
+    {
+        $job->delete();
+        return redirect()->route('admin.jobs.index')
+            ->with('success', 'Job deleted successfully.');
+    }
 } 
