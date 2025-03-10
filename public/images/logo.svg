@@ -1,5 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg width="120" height="40" viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M10 20C10 14.4772 14.4772 10 20 10H100C105.523 10 110 14.4772 110 20C110 25.5228 105.523 30 100 30H20C14.4772 30 10 25.5228 10 20Z" fill="#2563EB"/>
-  <text x="25" y="25" font-family="Arial" font-size="16" font-weight="bold" fill="white">AFRIGIG</text>
+<svg width="160" height="50" viewBox="0 0 160 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background with gradient -->
+    <defs>
+        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#3B82F6"/>
+            <stop offset="100%" style="stop-color:#6366F1"/>
+        </linearGradient>
+    </defs>
+    
+    <!-- Logo text with modern style -->
+    <text x="10" y="35" font-family="Arial Black, Helvetica, sans-serif" font-size="28" font-weight="900" fill="url(#gradient)">AFRI</text>
+    <text x="82" y="35" font-family="Arial Black, Helvetica, sans-serif" font-size="28" font-weight="900" fill="#4F46E5">GIG</text>
+    
+    <!-- Decorative elements -->
+    <path d="M75 15 L75 35" stroke="#4F46E5" stroke-width="2"/>
+    <circle cx="150" cy="25" r="4" fill="#3B82F6"/>
+    <circle cx="150" cy="25" r="8" fill="#3B82F6" fill-opacity="0.3"/>
 </svg> 
