@@ -14,10 +14,10 @@ class AdminMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!Auth::check() || Auth::user()->role !== 'admin') {
-            abort(403, 'Unauthorized access.');
+        if (Auth::check() && Auth::user()->role === 'admin') {
+            return $next($request);
         }
 
-        return $next($request);
+        return redirect()->route('dashboard')->with('error', 'Unauthorized access. Admin privileges required.');
     }
 } 

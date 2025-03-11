@@ -16,10 +16,6 @@
                         {{ __('Dashboard') }}
                     </x-nav-link>
 
-                    <x-nav-link :href="route('jobs.available')" :active="request()->routeIs('jobs.available')">
-                        {{ __('Available Jobs') }}
-                    </x-nav-link>
-
                     @if(auth()->user()->role === 'admin')
                         <x-nav-link :href="route('admin.users')" :active="request()->routeIs('admin.users')">
                             {{ __('Users') }}
@@ -33,40 +29,12 @@
                         <x-nav-link :href="route('admin.skill-assessments.index')" :active="request()->routeIs('admin.skill-assessments.*')">
                             {{ __('Skill Assessments') }}
                         </x-nav-link>
-                        <div class="relative" x-data="{ open: false }" @click.away="open = false" @close.stop="open = false">
-                            <button @click="open = !open" class="inline-flex items-center px-3 py-2 text-sm font-medium leading-4 text-gray-500 transition duration-150 ease-in-out bg-white border border-transparent rounded-md dark:text-gray-400 dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none">
-                                {{ __('Skill Assessments') }}
-                                <svg class="w-4 h-4 ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                </svg>
-                            </button>
-
-                            <div x-show="open"
-                                 x-transition:enter="transition ease-out duration-200"
-                                 x-transition:enter-start="transform opacity-0 scale-95"
-                                 x-transition:enter-end="transform opacity-100 scale-100"
-                                 x-transition:leave="transition ease-in duration-75"
-                                 x-transition:leave-start="transform opacity-100 scale-100"
-                                 x-transition:leave-end="transform opacity-0 scale-95"
-                                 class="absolute right-0 z-50 w-48 py-1 mt-2 origin-top-right bg-white rounded-md shadow-lg dark:bg-gray-700 ring-1 ring-black ring-opacity-5 focus:outline-none"
-                                 role="menu"
-                                 aria-orientation="vertical"
-                                 aria-labelledby="user-menu-button"
-                                 tabindex="-1">
-                                <a href="{{ route('admin.skill-assessments.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600" role="menuitem">
-                                    {{ __('Manage Assessments') }}
-                                </a>
-                                <a href="{{ route('admin.skill-assessments.results') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600" role="menuitem">
-                                    {{ __('View Results') }}
-                                </a>
-                                <a href="{{ route('admin.skill-assessments.feedback') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600" role="menuitem">
-                                    {{ __('Pending Feedback') }}
-                                </a>
-                            </div>
-                        </div>
                     @else
+                        <x-nav-link :href="route('jobs.available')" :active="request()->routeIs('jobs.available')">
+                            {{ __('Available Jobs') }}
+                        </x-nav-link>
                         <x-nav-link :href="route('jobs.index')" :active="request()->routeIs('jobs.index')">
-                            {{ __('Jobs') }}
+                            {{ __('My Jobs') }}
                         </x-nav-link>
                         @if(auth()->user()->role === 'client')
                             <x-nav-link :href="route('jobs.create')" :active="request()->routeIs('jobs.create')">
@@ -147,8 +115,11 @@
                     {{ __('Skill Assessments') }}
                 </x-responsive-nav-link>
             @else
+                <x-responsive-nav-link :href="route('jobs.available')" :active="request()->routeIs('jobs.available')">
+                    {{ __('Available Jobs') }}
+                </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('jobs.index')" :active="request()->routeIs('jobs.index')">
-                    {{ __('Jobs') }}
+                    {{ __('My Jobs') }}
                 </x-responsive-nav-link>
                 @if(auth()->user()->role === 'client')
                     <x-responsive-nav-link :href="route('jobs.create')" :active="request()->routeIs('jobs.create')">

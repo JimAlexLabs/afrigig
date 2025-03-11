@@ -19,8 +19,8 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-// Available Jobs - Public Route
-Route::get('/available-jobs', [JobController::class, 'available'])->name('jobs.available');
+// Public Job Listing
+Route::get('/jobs/public', [JobController::class, 'available'])->name('jobs.public');
 
 Route::get('/test-pixabay', function () {
     $pixabay = new \App\Services\PixabayService();
@@ -56,10 +56,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Job routes - now read-only for regular users
-    Route::get('/jobs', [JobController::class, 'index'])->name('jobs.index');
-    Route::get('/jobs/{job}', [JobController::class, 'show'])->name('jobs.show');
-    Route::post('/jobs/{job}/bid', [JobController::class, 'submitBid'])->name('jobs.bid');
+    // Job routes for authenticated users
+    Route::prefix('jobs')->name('jobs.')->group(function () {
+        Route::get('/', [JobController::class, 'index'])->name('index');
+        Route::get('/available', [JobController::class, 'available'])->name('available');
+        Route::get('/{job}', [JobController::class, 'show'])->name('show');
+        Route::post('/{job}/bid', [JobController::class, 'submitBid'])->name('bid');
+    });
 
     // Payment routes
     Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
@@ -128,11 +131,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Bid routes
-    Route::post('/jobs/{job}/bids', [BidController::class, 'store'])->name('bids.store');
-    Route::put('/bids/{bid}', [BidController::class, 'update'])->name('bids.update');
-    Route::delete('/bids/{bid}', [BidController::class, 'destroy'])->name('bids.destroy');
-    Route::patch('/bids/{bid}/accept', [BidController::class, 'accept'])->name('bids.accept');
-    Route::patch('/bids/{bid}/reject', [BidController::class, 'reject'])->name('bids.reject');
+    Route::middleware(['auth', 'verified', 'require.assessment'])->group(function () {
+        Route::post('/jobs/{job}/bids', [BidController::class, 'store'])->name('bids.store');
+        Route::put('/bids/{bid}', [BidController::class, 'update'])->name('bids.update');
+        Route::delete('/bids/{bid}', [BidController::class, 'destroy'])->name('bids.destroy');
+        Route::patch('/bids/{bid}/accept', [BidController::class, 'accept'])->name('bids.accept');
+        Route::patch('/bids/{bid}/reject', [BidController::class, 'reject'])->name('bids.reject');
+    });
 });
 
 // Social Login Routes

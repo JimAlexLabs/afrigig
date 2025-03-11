@@ -11,6 +11,7 @@ use App\Models\Skill;
 use App\Models\SkillAssessmentAttempt;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
 class AdminController extends Controller
@@ -20,180 +21,125 @@ class AdminController extends Controller
         $this->middleware(['auth', 'admin']);
     }
 
-    public function users(Request $request)
+    public function users()
     {
-        $query = User::query();
+        $users = User::withCount(['jobs', 'assessments'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
 
-        // Search
-        if ($request->has('search')) {
-            $search = $request->get('search');
-            $query->where(function($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
-            });
-        }
-
-        // Filter by role
-        if ($request->has('role') && $request->get('role')) {
-            $query->where('role', $request->get('role'));
-        }
-
-        $users = $query->latest()->paginate(10);
-
-        return view('admin.users', compact('users'));
+        return view('admin.users.index', compact('users'));
     }
 
-    public function jobs(Request $request)
+    public function jobs()
     {
-        $query = Job::with(['user', 'skills', 'bids']);
-
-        // Search
-        if ($request->has('search')) {
-            $search = $request->get('search');
-            $query->where(function($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
-            });
-        }
-
-        // Filter by status
-        if ($request->has('status') && $request->get('status')) {
-            $query->where('status', $request->get('status'));
-        }
-
-        $jobs = $query->latest()->paginate(9); // Changed to 9 for 3x3 grid
+        $jobs = Job::with(['user', 'bids'])
+            ->withCount('bids')
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
 
         return view('admin.jobs.index', compact('jobs'));
     }
 
-    public function payments(Request $request)
+    public function payments()
     {
-        $query = Payment::with(['user', 'job']);
+        $payments = Payment::with(['user', 'job'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
 
-        // Search
-        if ($request->has('search')) {
-            $search = $request->get('search');
-            $query->whereHas('user', function($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%");
-            })->orWhereHas('job', function($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%");
-            });
-        }
-
-        // Filter by status
-        if ($request->has('status') && $request->get('status')) {
-            $query->where('status', $request->get('status'));
-        }
-
-        $payments = $query->latest()->paginate(10);
-
-        return view('admin.payments', compact('payments'));
+        return view('admin.payments.index', compact('payments'));
     }
 
     public function verifyUser(User $user)
     {
-        $user->update(['is_verified' => true]);
-        return back()->with('success', 'User verified successfully.');
+        $user->update(['email_verified_at' => now()]);
+        return back()->with('success', 'User verified successfully');
     }
 
     public function toggleUserStatus(User $user)
     {
         $user->update(['is_active' => !$user->is_active]);
-        return back()->with('success', 'User status updated successfully.');
+        return back()->with('success', 'User status updated successfully');
     }
 
     public function showUser(User $user)
     {
-        $user->load(['jobs', 'bids', 'payments']);
-        
-        $stats = [
-            'total_jobs' => $user->jobs()->count(),
-            'active_jobs' => $user->jobs()->where('status', 'active')->count(),
-            'completed_jobs' => $user->jobs()->where('status', 'completed')->count(),
-            'total_earnings' => $user->payments()->where('status', 'completed')->sum('amount'),
-            'total_bids' => $user->bids()->count(),
-            'accepted_bids' => $user->bids()->where('status', 'accepted')->count(),
-        ];
-
-        return view('admin.users.show', compact('user', 'stats'));
+        $user->load(['jobs', 'assessments', 'payments']);
+        return view('admin.users.show', compact('user'));
     }
 
     public function deleteJob(Job $job)
     {
         $job->delete();
-        return back()->with('success', 'Job deleted successfully.');
+        return redirect()->route('admin.jobs.index')
+            ->with('success', 'Job deleted successfully');
     }
 
     public function showJob(Job $job)
     {
-        $job->load(['user', 'bids.user', 'milestones']);
+        $job->load(['user', 'bids.user']);
         return view('admin.jobs.show', compact('job'));
     }
 
     public function dashboard()
     {
-        // Stats for cards
-        $totalUsers = User::count();
-        $activeJobs = Job::where('status', 'active')->count();
-        $totalEarnings = Payment::where('status', 'completed')->sum('amount');
-        $completedJobs = Job::where('status', 'completed')->count();
+        // Get the start of the current month
+        $monthStart = Carbon::now()->startOfMonth();
+        
+        $data = [
+            'totalUsers' => User::count(),
+            'activeJobs' => Job::where('status', 'open')->count(),
+            'pendingAssessments' => SkillAssessment::where('status', 'pending')->count(),
+            'totalEarnings' => Payment::where('status', 'completed')
+                ->where('created_at', '>=', $monthStart)
+                ->sum('amount'),
+            'recentJobs' => Job::with(['user'])
+                ->latest()
+                ->take(5)
+                ->get(),
+            'recentAssessments' => SkillAssessment::with(['user'])
+                ->latest()
+                ->take(5)
+                ->get(),
+            'monthlyStats' => [
+                'userGrowth' => $this->calculateGrowthPercentage(User::class, $monthStart),
+                'jobGrowth' => $this->calculateGrowthPercentage(Job::class, $monthStart),
+                'earningsGrowth' => $this->calculateEarningsGrowth($monthStart),
+            ],
+        ];
 
-        // Get recent activities
-        $recentJobs = Job::with('user')
-            ->latest()
-            ->take(5)
-            ->get()
-            ->map(function($job) {
-                return [
-                    'user' => $job->user,
-                    'description' => "New job posted: {$job->title}",
-                    'created_at' => $job->created_at
-                ];
-            });
+        return view('admin.dashboard', $data);
+    }
 
-        $recentUsers = User::latest()
-            ->take(5)
-            ->get()
-            ->map(function($user) {
-                return [
-                    'user' => $user,
-                    'description' => "New user registered: {$user->name}",
-                    'created_at' => $user->created_at
-                ];
-            });
+    private function calculateGrowthPercentage($model, $monthStart)
+    {
+        $currentCount = $model::where('created_at', '>=', $monthStart)->count();
+        $lastMonthCount = $model::where('created_at', '>=', $monthStart->copy()->subMonth())
+            ->where('created_at', '<', $monthStart)
+            ->count();
 
-        $recentPayments = Payment::with('user')
-            ->where('status', 'completed')
-            ->latest()
-            ->take(5)
-            ->get()
-            ->map(function($payment) {
-                return [
-                    'user' => $payment->user,
-                    'description' => "Payment completed: ${$payment->amount}",
-                    'created_at' => $payment->created_at
-                ];
-            });
+        if ($lastMonthCount === 0) {
+            return $currentCount > 0 ? 100 : 0;
+        }
 
-        // Combine and sort activities
-        $recentActivities = collect()
-            ->merge($recentJobs)
-            ->merge($recentUsers)
-            ->merge($recentPayments)
-            ->sortByDesc('created_at')
-            ->take(10)
-            ->map(function($activity) {
-                return (object) $activity;
-            })
-            ->values();
+        return round((($currentCount - $lastMonthCount) / $lastMonthCount) * 100, 1);
+    }
 
-        return view('admin.dashboard', compact(
-            'totalUsers',
-            'activeJobs',
-            'totalEarnings',
-            'completedJobs',
-            'recentActivities'
-        ));
+    private function calculateEarningsGrowth($monthStart)
+    {
+        $currentEarnings = Payment::where('status', 'completed')
+            ->where('created_at', '>=', $monthStart)
+            ->sum('amount');
+
+        $lastMonthEarnings = Payment::where('status', 'completed')
+            ->where('created_at', '>=', $monthStart->copy()->subMonth())
+            ->where('created_at', '<', $monthStart)
+            ->sum('amount');
+
+        if ($lastMonthEarnings === 0) {
+            return $currentEarnings > 0 ? 100 : 0;
+        }
+
+        return round((($currentEarnings - $lastMonthEarnings) / $lastMonthEarnings) * 100, 1);
     }
 
     public function showPayment(Payment $payment)
@@ -204,32 +150,14 @@ class AdminController extends Controller
 
     public function processPayment(Payment $payment)
     {
-        if ($payment->status !== 'pending') {
-            return back()->with('error', 'This payment cannot be processed.');
-        }
-
-        try {
-            // Process payment logic here
-            $payment->update(['status' => 'completed']);
-            return back()->with('success', 'Payment processed successfully.');
-        } catch (\Exception $e) {
-            return back()->with('error', 'Failed to process payment: ' . $e->getMessage());
-        }
+        $payment->update(['status' => 'completed']);
+        return back()->with('success', 'Payment processed successfully');
     }
 
     public function refundPayment(Payment $payment)
     {
-        if ($payment->status !== 'completed') {
-            return back()->with('error', 'This payment cannot be refunded.');
-        }
-
-        try {
-            // Refund payment logic here
-            $payment->update(['status' => 'refunded']);
-            return back()->with('success', 'Payment refunded successfully.');
-        } catch (\Exception $e) {
-            return back()->with('error', 'Failed to refund payment: ' . $e->getMessage());
-        }
+        $payment->update(['status' => 'refunded']);
+        return back()->with('success', 'Payment refunded successfully');
     }
 
     public function earningsReport(Request $request)
@@ -315,11 +243,8 @@ class AdminController extends Controller
 
     public function skillAssessments()
     {
-        $assessments = SkillAssessment::with(['skill'])
-            ->withCount(['attempts', 'attempts as passed_count' => function ($query) {
-                $query->where('passed', true);
-            }])
-            ->latest()
+        $assessments = SkillAssessment::withCount(['attempts', 'completedAttempts'])
+            ->orderBy('created_at', 'desc')
             ->paginate(10);
 
         return view('admin.skill-assessments.index', compact('assessments'));
@@ -327,125 +252,132 @@ class AdminController extends Controller
 
     public function createSkillAssessment()
     {
-        $skills = Skill::verified()->get();
-        return view('admin.skill-assessments.create', compact('skills'));
+        return view('admin.skill-assessments.create');
     }
 
     public function storeSkillAssessment(Request $request)
     {
         $validated = $request->validate([
-            'skill_id' => 'required|exists:skills,id',
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'difficulty' => 'required|in:beginner,intermediate,advanced,expert',
-            'time_limit' => 'required|integer|min:5|max:180',
+            'category' => 'required|string',
+            'difficulty_level' => 'required|string',
+            'time_limit' => 'required|integer|min:5',
             'passing_score' => 'required|integer|min:0|max:100',
             'questions' => 'required|array|min:1',
-            'questions.*.question' => 'required|string',
-            'questions.*.options' => 'required|array|min:2',
-            'questions.*.correct_answer' => 'required|integer|min:0',
-            'questions.*.explanation' => 'required|string',
-            'questions.*.category' => 'required|string'
+            'questions.*.content' => 'required|string',
+            'questions.*.type' => 'required|string',
+            'questions.*.options' => 'required_if:questions.*.type,multiple_choice|array',
+            'questions.*.correct_answer' => 'required|string',
         ]);
 
         $assessment = SkillAssessment::create($validated);
 
-        return redirect()->route('admin.skill-assessments.index')
-            ->with('success', 'Skill assessment created successfully.');
+        return redirect()->route('admin.skill-assessments.show', $assessment)
+            ->with('success', 'Skill assessment created successfully');
     }
 
     public function editSkillAssessment(SkillAssessment $assessment)
     {
-        $skills = Skill::verified()->get();
-        return view('admin.skill-assessments.edit', compact('assessment', 'skills'));
+        return view('admin.skill-assessments.edit', compact('assessment'));
     }
 
     public function updateSkillAssessment(Request $request, SkillAssessment $assessment)
     {
         $validated = $request->validate([
-            'skill_id' => 'required|exists:skills,id',
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'difficulty' => 'required|in:beginner,intermediate,advanced,expert',
-            'time_limit' => 'required|integer|min:5|max:180',
+            'category' => 'required|string',
+            'difficulty_level' => 'required|string',
+            'time_limit' => 'required|integer|min:5',
             'passing_score' => 'required|integer|min:0|max:100',
             'questions' => 'required|array|min:1',
-            'questions.*.question' => 'required|string',
-            'questions.*.options' => 'required|array|min:2',
-            'questions.*.correct_answer' => 'required|integer|min:0',
-            'questions.*.explanation' => 'required|string',
-            'questions.*.category' => 'required|string',
-            'is_active' => 'boolean'
+            'questions.*.content' => 'required|string',
+            'questions.*.type' => 'required|string',
+            'questions.*.options' => 'required_if:questions.*.type,multiple_choice|array',
+            'questions.*.correct_answer' => 'required|string',
         ]);
 
         $assessment->update($validated);
 
-        return redirect()->route('admin.skill-assessments.index')
-            ->with('success', 'Skill assessment updated successfully.');
+        return redirect()->route('admin.skill-assessments.show', $assessment)
+            ->with('success', 'Skill assessment updated successfully');
     }
 
     public function deleteSkillAssessment(SkillAssessment $assessment)
     {
         $assessment->delete();
-
         return redirect()->route('admin.skill-assessments.index')
-            ->with('success', 'Skill assessment deleted successfully.');
+            ->with('success', 'Skill assessment deleted successfully');
     }
 
     public function assessmentResults()
     {
-        $attempts = SkillAssessmentAttempt::with(['user', 'assessment.skill'])
-            ->latest()
-            ->paginate(20);
+        $results = DB::table('skill_assessment_attempts')
+            ->join('users', 'skill_assessment_attempts.user_id', '=', 'users.id')
+            ->join('skill_assessments', 'skill_assessment_attempts.assessment_id', '=', 'skill_assessments.id')
+            ->select('skill_assessment_attempts.*', 'users.name as user_name', 'skill_assessments.title as assessment_title')
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
 
-        return view('admin.skill-assessments.results', compact('attempts'));
+        return view('admin.skill-assessments.results', compact('results'));
     }
 
     public function pendingFeedback()
     {
-        $attempts = SkillAssessmentAttempt::with(['user', 'assessment.skill', 'feedback'])
-            ->whereHas('feedback', function ($query) {
-                $query->whereNull('feedback_date');
-            })
-            ->orWhereDoesntHave('feedback')
-            ->where('completed_at', '<=', now()->subWeeks(2))
-            ->latest()
-            ->paginate(20);
+        $attempts = DB::table('skill_assessment_attempts')
+            ->where('status', 'completed')
+            ->whereNull('feedback')
+            ->join('users', 'skill_assessment_attempts.user_id', '=', 'users.id')
+            ->join('skill_assessments', 'skill_assessment_attempts.assessment_id', '=', 'skill_assessments.id')
+            ->select('skill_assessment_attempts.*', 'users.name as user_name', 'skill_assessments.title as assessment_title')
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
 
         return view('admin.skill-assessments.pending-feedback', compact('attempts'));
     }
 
-    public function showAttempt(SkillAssessmentAttempt $attempt)
+    public function showAttempt($attempt)
     {
-        return view('admin.skill-assessments.show-attempt', compact('attempt'));
+        $attempt = DB::table('skill_assessment_attempts')
+            ->where('skill_assessment_attempts.id', $attempt)
+            ->join('users', 'skill_assessment_attempts.user_id', '=', 'users.id')
+            ->join('skill_assessments', 'skill_assessment_attempts.assessment_id', '=', 'skill_assessments.id')
+            ->select('skill_assessment_attempts.*', 'users.name as user_name', 'skill_assessments.title as assessment_title')
+            ->first();
+
+        return view('admin.skill-assessments.attempt', compact('attempt'));
     }
 
-    public function createFeedback(SkillAssessmentAttempt $attempt)
+    public function createFeedback($attempt)
     {
+        $attempt = DB::table('skill_assessment_attempts')
+            ->where('skill_assessment_attempts.id', $attempt)
+            ->join('users', 'skill_assessment_attempts.user_id', '=', 'users.id')
+            ->join('skill_assessments', 'skill_assessment_attempts.assessment_id', '=', 'skill_assessments.id')
+            ->select('skill_assessment_attempts.*', 'users.name as user_name', 'skill_assessments.title as assessment_title')
+            ->first();
+
         return view('admin.skill-assessments.feedback', compact('attempt'));
     }
 
-    public function provideFeedback(Request $request, SkillAssessmentAttempt $attempt)
+    public function provideFeedback(Request $request, $attempt)
     {
         $validated = $request->validate([
             'feedback' => 'required|string',
-            'improvement_areas' => 'required|array',
-            'recommended_resources' => 'required|array'
+            'score' => 'required|integer|min:0|max:100',
         ]);
 
-        $feedback = $attempt->feedback()->updateOrCreate(
-            ['skill_assessment_attempt_id' => $attempt->id],
-            [
+        DB::table('skill_assessment_attempts')
+            ->where('id', $attempt)
+            ->update([
                 'feedback' => $validated['feedback'],
-                'improvement_areas' => $validated['improvement_areas'],
-                'recommended_resources' => $validated['recommended_resources'],
-                'feedback_date' => now(),
-                'reviewed_by' => $request->user()->id
-            ]
-        );
+                'score' => $validated['score'],
+                'feedback_provided_at' => now(),
+            ]);
 
-        return redirect()->route('admin.skill-assessments.feedback')
-            ->with('success', 'Feedback provided successfully.');
+        return redirect()->route('admin.skill-assessments.attempt', $attempt)
+            ->with('success', 'Feedback provided successfully');
     }
 
     public function createJob()
@@ -459,21 +391,23 @@ class AdminController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'requirements' => 'required|string',
-            'benefits' => 'nullable|string',
-            'budget' => 'required|numeric|min:1',
+            'benefits' => 'required|string',
+            'category' => 'required|string',
+            'skills_required' => 'required|array',
+            'budget_min' => 'required|numeric|min:0',
+            'budget_max' => 'required|numeric|gt:budget_min',
             'deadline' => 'required|date|after:today',
-            'skills' => 'required|array|min:1',
-            'skills.*' => 'string',
-            'location' => 'required|string',
-            'job_type' => 'required|in:full-time,part-time,contract,temporary',
-            'experience_level' => 'required|in:entry,intermediate,expert',
-            'posted_by' => 'required|string'
+            'experience_level' => 'required|string',
+            'project_length' => 'required|string',
         ]);
 
-        $job = Job::create($validated);
+        $job = Job::create($validated + [
+            'status' => 'open',
+            'posted_by' => Auth::user()->name,
+        ]);
 
         return redirect()->route('admin.jobs.show', $job)
-            ->with('success', 'Job posted successfully.');
+            ->with('success', 'Job created successfully');
     }
 
     public function editJob(Job $job)
@@ -487,27 +421,20 @@ class AdminController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'requirements' => 'required|string',
-            'benefits' => 'nullable|string',
-            'budget' => 'required|numeric|min:1',
+            'benefits' => 'required|string',
+            'category' => 'required|string',
+            'skills_required' => 'required|array',
+            'budget_min' => 'required|numeric|min:0',
+            'budget_max' => 'required|numeric|gt:budget_min',
             'deadline' => 'required|date|after:today',
-            'skills' => 'required|array|min:1',
-            'skills.*' => 'string',
-            'location' => 'required|string',
-            'job_type' => 'required|in:full-time,part-time,contract,temporary',
-            'experience_level' => 'required|in:entry,intermediate,expert',
-            'posted_by' => 'required|string'
+            'experience_level' => 'required|string',
+            'project_length' => 'required|string',
+            'status' => 'required|string',
         ]);
 
         $job->update($validated);
 
         return redirect()->route('admin.jobs.show', $job)
-            ->with('success', 'Job updated successfully.');
-    }
-
-    public function deleteJob(Job $job)
-    {
-        $job->delete();
-        return redirect()->route('admin.jobs.index')
-            ->with('success', 'Job deleted successfully.');
+            ->with('success', 'Job updated successfully');
     }
 } 
