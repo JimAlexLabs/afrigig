@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background -->
+    <circle cx="100" cy="100" r="100" fill="#F3F4F6"/>
+    
+    <!-- Professional Man Avatar -->
+    <path d="M100 120C130 120 150 150 150 180H50C50 150 70 120 100 120Z" fill="#6366F1"/>
+    <circle cx="100" cy="80" r="40" fill="#6366F1"/>
+    
+    <!-- Hair -->
+    <path d="M65 70C65 45 80 35 100 35C120 35 135 45 135 70C135 85 120 90 100 90C80 90 65 85 65 70Z" fill="#374151"/>
+    
+    <!-- Face Details -->
+    <circle cx="85" cy="75" r="5" fill="white"/>
+    <circle cx="115" cy="75" r="5" fill="white"/>
+    <path d="M90 90C95 95 105 95 110 90" stroke="white" stroke-width="3" stroke-linecap="round"/>
+    
+    <!-- Beard -->
+    <path d="M85 95C85 110 100 120 100 120C100 120 115 110 115 95" fill="#374151"/>
+</svg> 

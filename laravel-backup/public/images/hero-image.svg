@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background -->
+    <rect width="800" height="600" fill="#F3F4F6"/>
+    
+    <!-- Decorative Elements -->
+    <circle cx="400" cy="300" r="200" fill="#3B82F6" opacity="0.1"/>
+    <circle cx="400" cy="300" r="150" fill="#3B82F6" opacity="0.2"/>
+    
+    <!-- Stylized People Silhouettes -->
+    <path d="M350 200 Q400 150 450 200 L450 350 L350 350 Z" fill="#1D4ED8"/>
+    <circle cx="400" cy="170" r="40" fill="#1D4ED8"/>
+    
+    <path d="M250 250 Q300 200 350 250 L350 400 L250 400 Z" fill="#3B82F6"/>
+    <circle cx="300" cy="220" r="40" fill="#3B82F6"/>
+    
+    <path d="M450 250 Q500 200 550 250 L550 400 L450 400 Z" fill="#60A5FA"/>
+    <circle cx="500" cy="220" r="40" fill="#60A5FA"/>
+    
+    <!-- African Pattern Elements -->
+    <path d="M100 500 L150 450 L200 500 L150 550 Z" fill="#2563EB"/>
+    <path d="M600 500 L650 450 L700 500 L650 550 Z" fill="#2563EB"/>
+    <path d="M350 550 L400 500 L450 550 L400 600 Z" fill="#2563EB"/>
+</svg> 

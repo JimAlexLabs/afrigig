@@ -2,114 +2,131 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
+use CodeIgniter\Model;
 
-class User extends Authenticatable
+class User extends Model
 {
-    use HasApiTokens, HasFactory, Notifiable;
-
-    protected $fillable = [
+    protected $table = 'users';
+    protected $primaryKey = 'id';
+    protected $useAutoIncrement = true;
+    protected $returnType = 'array';
+    protected $useSoftDeletes = true;
+    protected $allowedFields = [
         'name',
         'email',
         'password',
         'role',
-        'is_active',
-        'is_verified',
         'avatar',
         'phone',
         'address',
-        'city',
-        'country',
         'bio',
-        'skills',
-        'experience_years',
-        'hourly_rate',
-        'education',
-        'certifications',
-        'registration_fee_paid',
-        'payment_verified',
-        'portfolio_url',
+        'company',
+        'website',
         'social_links',
-        'languages',
-        'availability_status',
-        'rating',
-        'completed_jobs_count',
-        'success_rate',
+        'skills',
+        'hourly_rate',
+        'availability',
+        'email_verified_at',
+        'remember_token',
         'google_id',
         'linkedin_id',
-        'terms_accepted',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
     ];
 
-    protected $hidden = [
-        'password',
-        'remember_token',
+    // Dates
+    protected $useTimestamps = true;
+    protected $dateFormat = 'datetime';
+    protected $createdField = 'created_at';
+    protected $updatedField = 'updated_at';
+    protected $deletedField = 'deleted_at';
+
+    // Validation
+    protected $validationRules = [
+        'name' => 'required|min_length[3]|max_length[255]',
+        'email' => 'required|valid_email|is_unique[users.email,id,{id}]',
+        'password' => 'required|min_length[8]',
+        'role' => 'required|in_list[admin,freelancer,client]',
     ];
 
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-        'password' => 'hashed',
-        'skills' => 'array',
-        'social_links' => 'array',
-        'languages' => 'array',
-        'certifications' => 'array',
-        'is_active' => 'boolean',
-        'is_verified' => 'boolean',
-        'registration_fee_paid' => 'boolean',
-        'payment_verified' => 'boolean',
-        'rating' => 'float',
-        'completed_jobs_count' => 'integer',
-        'success_rate' => 'float',
+    protected $validationMessages = [
+        'name' => [
+            'required' => 'Name is required',
+            'min_length' => 'Name must be at least 3 characters long',
+            'max_length' => 'Name cannot exceed 255 characters',
+        ],
+        'email' => [
+            'required' => 'Email is required',
+            'valid_email' => 'Please enter a valid email address',
+            'is_unique' => 'This email is already registered',
+        ],
+        'password' => [
+            'required' => 'Password is required',
+            'min_length' => 'Password must be at least 8 characters long',
+        ],
+        'role' => [
+            'required' => 'Role is required',
+            'in_list' => 'Invalid role selected',
+        ],
     ];
 
-    // Relationships
-    public function jobs()
+    protected $skipValidation = false;
+    protected $cleanValidationRules = true;
+
+    // Callbacks
+    protected $beforeInsert = ['hashPassword'];
+    protected $beforeUpdate = ['hashPassword'];
+
+    protected function hashPassword(array $data)
     {
-        return $this->hasMany(Job::class);
+        if (!isset($data['data']['password'])) {
+            return $data;
+        }
+
+        $data['data']['password'] = password_hash($data['data']['password'], PASSWORD_DEFAULT);
+        return $data;
     }
 
-    public function bids()
+    public function verifyPassword(string $password, string $hash): bool
     {
-        return $this->hasMany(Bid::class);
+        return password_verify($password, $hash);
     }
 
-    public function payments()
+    public function findByEmail(string $email)
     {
-        return $this->hasMany(Payment::class);
+        return $this->where('email', $email)->first();
     }
 
-    public function reviews()
+    public function markEmailAsVerified(int $userId)
     {
-        return $this->hasMany(Review::class, 'freelancer_id');
+        return $this->update($userId, ['email_verified_at' => date('Y-m-d H:i:s')]);
     }
 
-    public function skills()
+    public function updateRememberToken(int $userId, string $token)
     {
-        return $this->belongsToMany(Skill::class, 'user_skills')
-            ->withPivot('proficiency_level', 'years_experience', 'is_verified')
-            ->withTimestamps();
+        return $this->update($userId, ['remember_token' => $token]);
     }
 
-    public function verifications()
+    public function updateSocialId(int $userId, string $provider, string $socialId)
     {
-        return $this->hasMany(UserVerification::class);
+        $field = $provider . '_id';
+        return $this->update($userId, [$field => $socialId]);
     }
 
-    public function skillAssessmentAttempts()
+    public function findBySocialId(string $provider, string $socialId)
     {
-        return $this->hasMany(SkillAssessmentAttempt::class);
+        $field = $provider . '_id';
+        return $this->where($field, $socialId)->first();
     }
 
-    public function isFreelancer()
+    public function getFreelancers()
     {
-        return $this->role === 'freelancer';
+        return $this->where('role', 'freelancer')->findAll();
     }
 
-    public function isClient()
+    public function getClients()
     {
-        return $this->role === 'client';
+        return $this->where('role', 'client')->findAll();
     }
 
     public function isAdmin(): bool
@@ -117,21 +134,13 @@ class User extends Authenticatable
         return $this->role === 'admin';
     }
 
-    public function getAverageRatingAttribute()
+    public function isFreelancer(): bool
     {
-        return $this->reviews()->avg('rating') ?? 0;
+        return $this->role === 'freelancer';
     }
 
-    public function getSuccessRateAttribute()
+    public function isClient(): bool
     {
-        $total_jobs = $this->jobs()->count();
-        $completed_jobs = $this->jobs()->where('status', 'completed')->count();
-        
-        return $total_jobs > 0 ? ($completed_jobs / $total_jobs) * 100 : 0;
+        return $this->role === 'client';
     }
-
-    public function getIsAvailableAttribute()
-    {
-        return $this->availability_status === 'available';
-    }
-} 
+}
