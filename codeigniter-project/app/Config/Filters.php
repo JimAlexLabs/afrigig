@@ -12,6 +12,7 @@ use CodeIgniter\Filters\InvalidChars;
 use CodeIgniter\Filters\PageCache;
 use CodeIgniter\Filters\PerformanceMetrics;
 use CodeIgniter\Filters\SecureHeaders;
+use App\Filters\AuthFilter;
 
 class Filters extends BaseFilters
 {
@@ -34,6 +35,7 @@ class Filters extends BaseFilters
         'forcehttps'    => ForceHTTPS::class,
         'pagecache'     => PageCache::class,
         'performance'   => PerformanceMetrics::class,
+        'auth'          => AuthFilter::class,
     ];
 
     /**
@@ -69,11 +71,12 @@ class Filters extends BaseFilters
      */
     public array $globals = [
         'before' => [
+            'csrf',
             // 'honeypot',
-            // 'csrf',
             // 'invalidchars',
         ],
         'after' => [
+            'toolbar',
             // 'honeypot',
             // 'secureheaders',
         ],
@@ -103,5 +106,18 @@ class Filters extends BaseFilters
      *
      * @var array<string, array<string, list<string>>>
      */
-    public array $filters = [];
+    public array $filters = [
+        'auth' => [
+            'before' => [
+                'dashboard',
+                'dashboard/*',
+                'profile',
+                'profile/*',
+                'jobs/create',
+                'jobs/*/edit',
+                'bids/*',
+                'messages/*',
+            ],
+        ],
+    ];
 }

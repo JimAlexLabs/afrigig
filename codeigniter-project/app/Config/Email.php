@@ -6,116 +6,93 @@ use CodeIgniter\Config\BaseConfig;
 
 class Email extends BaseConfig
 {
-    public string $fromEmail  = '';
-    public string $fromName   = '';
-    public string $recipients = '';
+    /**
+     * @var string
+     */
+    public $fromEmail = 'noreply@afrigig.com';
 
     /**
-     * The "user agent"
+     * @var string
      */
-    public string $userAgent = 'CodeIgniter';
+    public $fromName = 'AfriGig';
 
     /**
-     * The mail sending protocol: mail, sendmail, smtp
+     * @var string
      */
-    public string $protocol = 'mail';
+    public $protocol = 'smtp';
 
     /**
-     * The server path to Sendmail.
+     * @var string
      */
-    public string $mailPath = '/usr/sbin/sendmail';
+    public $SMTPHost = 'smtp.mailtrap.io';
 
     /**
-     * SMTP Server Hostname
+     * @var int
      */
-    public string $SMTPHost = '';
+    public $SMTPPort = 2525;
 
     /**
-     * SMTP Username
+     * @var string
      */
-    public string $SMTPUser = '';
+    public $SMTPUser = '';
 
     /**
-     * SMTP Password
+     * @var string
      */
-    public string $SMTPPass = '';
+    public $SMTPPass = '';
 
     /**
-     * SMTP Port
+     * @var string
      */
-    public int $SMTPPort = 25;
+    public $SMTPCrypto = 'tls';
 
     /**
-     * SMTP Timeout (in seconds)
+     * @var string
      */
-    public int $SMTPTimeout = 5;
+    public $mailType = 'html';
 
     /**
-     * Enable persistent SMTP connections
+     * @var string
      */
-    public bool $SMTPKeepAlive = false;
+    public $charset = 'UTF-8';
 
     /**
-     * SMTP Encryption.
-     *
-     * @var string '', 'tls' or 'ssl'. 'tls' will issue a STARTTLS command
-     *             to the server. 'ssl' means implicit SSL. Connection on port
-     *             465 should set this to ''.
+     * @var string
      */
-    public string $SMTPCrypto = 'tls';
+    public $wordWrap = true;
 
     /**
-     * Enable word-wrap
+     * @var bool
      */
-    public bool $wordWrap = true;
+    public $validate = true;
 
     /**
-     * Character count to wrap at
+     * @var int
      */
-    public int $wrapChars = 76;
+    public $priority = 3;
 
     /**
-     * Type of mail, either 'text' or 'html'
+     * @var int
      */
-    public string $mailType = 'text';
+    public $CRLF = "\r\n";
 
     /**
-     * Character set (utf-8, iso-8859-1, etc.)
+     * @var int
      */
-    public string $charset = 'UTF-8';
+    public $newline = "\r\n";
 
     /**
-     * Whether to validate the email address
+     * @var bool
      */
-    public bool $validate = false;
+    public $BCCBatchMode = false;
 
     /**
-     * Email Priority. 1 = highest. 5 = lowest. 3 = normal
+     * @var int
      */
-    public int $priority = 3;
+    public $BCCBatchSize = 200;
 
     /**
-     * Newline character. (Use “\r\n” to comply with RFC 822)
+     * @var bool
      */
-    public string $CRLF = "\r\n";
-
-    /**
-     * Newline character. (Use “\r\n” to comply with RFC 822)
-     */
-    public string $newline = "\r\n";
-
-    /**
-     * Enable BCC Batch Mode.
-     */
-    public bool $BCCBatchMode = false;
-
-    /**
-     * Number of emails in each BCC batch
-     */
-    public int $BCCBatchSize = 200;
-
-    /**
-     * Enable notify message from server
-     */
-    public bool $DSN = false;
+    public $DSN = false;
 }
